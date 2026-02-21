@@ -21,20 +21,39 @@ import threading
 #                    設定
 # =============================================
 SEED_URLS = [
+    # 日本語サイト
+    "https://ja.wikipedia.org/",
     "https://zenn.dev/",
     "https://qiita.com/",
+    "https://note.com/",
+    # 海外サイト - 百科事典
+    "https://en.wikipedia.org/",
+    # 海外サイト - ニュース
+    "https://www.bbc.com/",
+    "https://www.cnn.com/",
+    "https://news.google.com/",
+    # 技術系
     "https://github.com/",
     "https://stackoverflow.com/",
     "https://dev.to/",
     "https://medium.com/",
-    "https://note.com/",
+    "https://www.techcrunch.com/",
+    "https://www.wired.com/",
+    "https://slashdot.org/",
+    "https://news.ycombinator.com/",
+    "https://arxiv.org/",
+    "https://www.producthunt.com/",
+    # Q&A・コミュニティ
+    "https://www.quora.com/",
+    # ブログ
+    "https://www.tumblr.com/",
+    "https://wordpress.com/",
+    "https://www.blogger.com/",
+    "https://readthedocs.org/",
     "https://github.com/Gr3nja/",
-    "https://www.reddit.com/",
-    "https://x.com/",
-    "https://youtube.com/",
 ]
-MAX_PAGES   = 10000
-MAX_DEPTH   = 5
+MAX_PAGES   = 1000
+MAX_DEPTH   = 3
 DELAY       = 0.01
 OUTPUT_FILE = "index.json"
 MAX_WORKERS = 10  # 並列スレッド数
@@ -222,11 +241,18 @@ class SharedState:
     def __init__(self):
         self.visited = set()
         self.results = []
+        self.seen_content = set()  # URL+タイトル組み合わせで重複排除
         self.lock = threading.Lock()
     
     def add_result(self, item):
         with self.lock:
-            self.results.append(item)
+            # URL+タイトルのハッシュで重複排除
+            content_key = f"{item['url']}|{item['title']}"
+            if content_key not in self.seen_content:
+                self.seen_content.add(content_key)
+                self.results.append(item)
+                return True
+            return False
     
     def mark_visited(self, url):
         with self.lock:
@@ -284,11 +310,15 @@ def crawl_domain(domain, urls, shared_state, robots):
         
         title = parser.title.strip()  # タイトルが空の場合は空文字列を使う
         
-        shared_state.add_result({
+        if shared_state.add_result({
             "url":   url,
             "title": title[:200],
-        })
-        print(f"  ✓ {title[:60] if title else '(no title)'}")
+        }):
+            # 実際に追加された場合のみ表示
+            print(f"  ✓ {title[:60] if title else '(no title)'}")
+        else:
+            # 重複の場合
+            print(f"  [DUP] {title[:60] if title else '(no title)'}")
         
         # 新しいリンクをキューに追加
         for link in parser.links[:30]:
