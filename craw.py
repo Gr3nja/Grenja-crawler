@@ -1,12 +1,13 @@
 """
 crawler.py - シンプルWebクローラー
-実行すると index.json に結果を書き込みます
+実行すると index.csv に結果を書き込みます
 
 使い方:
   python crawler.py   （標準ライブラリのみ・pip不要）
 """
 
 import json
+import csv
 import time
 import ssl
 import urllib.request
@@ -34,15 +35,12 @@ SEED_URLS = [
     "https://news.google.com/",
     # 技術系
     "https://github.com/",
-    "https://stackoverflow.com/",
     "https://dev.to/",
-    "https://medium.com/",
     "https://www.techcrunch.com/",
     "https://www.wired.com/",
     "https://slashdot.org/",
     "https://news.ycombinator.com/",
     "https://arxiv.org/",
-    "https://www.producthunt.com/",
     # Q&A・コミュニティ
     "https://www.quora.com/",
     # ブログ
@@ -52,10 +50,10 @@ SEED_URLS = [
     "https://readthedocs.org/",
     "https://github.com/Gr3nja/",
 ]
-MAX_PAGES   = 30000
+MAX_PAGES   = 3000
 MAX_DEPTH   = 3
 DELAY       = 0.01
-OUTPUT_FILE = "index.json"
+OUTPUT_FILE = "index.csv"
 MAX_WORKERS = 10  # 並列スレッド数
 # =============================================
 
@@ -373,7 +371,10 @@ def crawl():
 if __name__ == "__main__":
     pages = crawl()
 
-    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
-        json.dump(pages, f, ensure_ascii=False, indent=2)
+    # CSVフォーマットで出力
+    with open(OUTPUT_FILE, "w", encoding="utf-8", newline="") as f:
+        writer = csv.DictWriter(f, fieldnames=["url", "title"])
+        writer.writeheader()
+        writer.writerows(pages)
 
     print(f"\n✅ 完了！  {len(pages)} ページ → {OUTPUT_FILE}")
