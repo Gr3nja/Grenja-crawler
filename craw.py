@@ -1,0 +1,289 @@
+"""
+crawler.py - シンプルWebクローラー
+実行すると index.json に結果を書き込みます
+
+使い方:
+  python crawler.py   （標準ライブラリのみ・pip不要）
+"""
+
+import json
+import time
+import ssl
+import urllib.request
+import xml.etree.ElementTree as ET
+from collections import deque
+from urllib.parse import urljoin, urlparse, urlunparse
+from html.parser import HTMLParser
+
+# =============================================
+#                    設定
+# =============================================
+SEED_URLS = [
+    "https://zenn.dev/",
+    "https://qiita.com/",
+    "https://developer.mozilla.org/ja/",
+    "https://docs.python.org/ja/",
+]
+MAX_PAGES   = 20
+MAX_DEPTH   = 2
+DELAY       = 0.1
+OUTPUT_FILE = "index.json"
+# =============================================
+
+
+# ── HTMLパーサー ──────────────────────────────────────────
+
+class ContentParser(HTMLParser):
+    def __init__(self, base_url):
+        super().__init__()
+        self.base_url = base_url
+        self.title = ""
+        self.links = []
+        self._in_title = False
+        self._skip = False
+
+    def handle_starttag(self, tag, attrs):
+        attrs_dict = dict(attrs)
+        if tag == "title":
+            self._in_title = True
+        elif tag in ("script", "style"):
+            self._skip = True
+        elif tag == "a" and "href" in attrs_dict:
+            abs_url = urljoin(self.base_url, attrs_dict["href"])
+            self.links.append(abs_url)
+
+    def handle_endtag(self, tag):
+        if tag == "title":
+            self._in_title = False
+        elif tag in ("script", "style"):
+            self._skip = False
+
+    def handle_data(self, data):
+        if self._skip:
+            return
+        if self._in_title:
+            self.title += data
+
+
+# ── URL ユーティリティ ────────────────────────────────────
+
+def normalize_url(url):
+    p = urlparse(url)
+    return urlunparse((p.scheme.lower(), p.netloc.lower(), p.path, p.params, p.query, ""))
+
+def is_valid_url(url):
+    try:
+        p = urlparse(url)
+        if p.scheme not in ("http", "https"):
+            return False
+        if not p.netloc:
+            return False
+        bad_exts = (".pdf", ".jpg", ".jpeg", ".png", ".gif", ".zip", ".exe", ".mp4", ".mp3")
+        if any(p.path.lower().endswith(e) for e in bad_exts):
+            return False
+        return True
+    except Exception:
+        return False
+
+
+# ── robots.txt チェック ───────────────────────────────────
+
+class RobotsTxtParser:
+    def __init__(self):
+        self._disallowed = {}
+        self._delay = {}
+
+    def fetch(self, domain):
+        if domain in self._disallowed:
+            return
+        self._disallowed[domain] = []
+        try:
+            url = f"https://{domain}/robots.txt"
+            req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+            with urllib.request.urlopen(req, timeout=5, context=_ssl_ctx) as res:
+                text = res.read().decode("utf-8", errors="ignore")
+            current_agent = None
+            for line in text.splitlines():
+                line = line.split("#")[0].strip()
+                if not line:
+                    continue
+                parts = line.split(":", 1)
+                if len(parts) != 2:
+                    continue
+                directive, value = parts[0].strip().lower(), parts[1].strip()
+                if directive == "user-agent":
+                    current_agent = value
+                elif directive == "disallow" and current_agent == "*" and value:
+                    self._disallowed[domain].append(value)
+                elif directive == "crawl-delay" and current_agent == "*":
+                    try:
+                        self._delay[domain] = float(value)
+                    except ValueError:
+                        pass
+        except Exception as e:
+            print(f"  [robots.txt] {domain} → {e}")
+
+    def can_fetch(self, url):
+        p = urlparse(url)
+        for blocked in self._disallowed.get(p.netloc, []):
+            if p.path.startswith(blocked):
+                return False
+        return True
+
+    def crawl_delay(self, domain):
+        return self._delay.get(domain, DELAY)
+
+
+# ── SSL設定 ───────────────────────────────────────────────
+
+_ssl_ctx = ssl.create_default_context()
+_ssl_ctx.check_hostname = False
+_ssl_ctx.verify_mode = ssl.CERT_NONE
+
+# ブラウザに近いUser-Agentで弾かれにくくする
+HEADERS = {
+    "User-Agent": (
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+        "AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/120.0.0.0 Safari/537.36"
+    ),
+    "Accept": "text/html,application/xhtml+xml",
+    "Accept-Language": "ja,en;q=0.9",
+}
+
+def _open(url, timeout=10):
+    req = urllib.request.Request(url, headers=HEADERS)
+    return urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx)
+
+
+# ── sitemap / RSS ─────────────────────────────────────────
+
+def fetch_sitemap(domain):
+    urls = []
+    for path in ("/sitemap.xml", "/sitemap_index.xml"):
+        try:
+            with _open(f"https://{domain}{path}") as res:
+                root = ET.fromstring(res.read())
+            for elem in root.iter():
+                if elem.tag.endswith("loc") and elem.text:
+                    u = elem.text.strip()
+                    if is_valid_url(u):
+                        urls.append(normalize_url(u))
+        except Exception:
+            pass
+    return urls
+
+def fetch_rss(domain):
+    urls = []
+    for path in ("/feed", "/rss", "/atom.xml", "/feed.xml"):
+        try:
+            with _open(f"https://{domain}{path}") as res:
+                root = ET.fromstring(res.read())
+            for elem in root.iter():
+                if elem.tag.endswith("link") and elem.text:
+                    u = elem.text.strip()
+                    if is_valid_url(u):
+                        urls.append(normalize_url(u))
+        except Exception:
+            pass
+    return urls
+
+
+# ── ページ取得 ────────────────────────────────────────────
+
+def fetch_page(url):
+    try:
+        with _open(url) as res:
+            ct = res.headers.get("Content-Type", "")
+            if "text/html" not in ct:
+                print(f"  [SKIP] Content-Typeが対象外: {ct[:50]}  ({url})")
+                return None
+            encoding = res.headers.get_content_charset("utf-8")
+            return res.read().decode(encoding, errors="ignore")
+    except Exception as e:
+        print(f"  [SKIP] 取得失敗: {e}  ({url})")
+        return None
+
+
+# ── メインクローラー ──────────────────────────────────────
+
+def crawl():
+    robots = RobotsTxtParser()
+    visited = set()
+    seen_urls = set()   # URLベースで重複排除（タイトルではなくURL）
+    queue = deque()
+    results = []
+
+    for seed in SEED_URLS:
+        seed = normalize_url(seed)
+        domain = urlparse(seed).netloc
+        print(f"robots.txt 取得中: {domain}")
+        robots.fetch(domain)
+        queue.append((seed, 0))
+        for u in fetch_sitemap(domain) + fetch_rss(domain):
+            queue.append((u, 1))
+
+    print(f"\nクロール開始  最大{MAX_PAGES}ページ / 深さ{MAX_DEPTH}\n")
+
+    domain_last = {}
+
+    while queue and len(results) < MAX_PAGES:
+        url, depth = queue.popleft()
+        url = normalize_url(url)
+
+        if url in visited:
+            continue
+        if not is_valid_url(url):
+            continue
+        if not robots.can_fetch(url):
+            print(f"  [SKIP] robots.txtで禁止: {url}")
+            continue
+
+        visited.add(url)
+        domain = urlparse(url).netloc
+
+        # クロール遅延
+        delay = robots.crawl_delay(domain)
+        wait = delay - (time.time() - domain_last.get(domain, 0))
+        if wait > 0:
+            time.sleep(wait)
+        domain_last[domain] = time.time()
+
+        print(f"[{len(results)+1}/{MAX_PAGES}] {url}")
+        html = fetch_page(url)
+        if not html:
+            continue
+
+        parser = ContentParser(url)
+        try:
+            parser.feed(html)
+        except Exception as e:
+            print(f"  [SKIP] パース失敗: {e}")
+            continue
+
+        title = parser.title.strip() or url  # タイトルがなければURLを使う
+
+        results.append({
+            "url":   url,
+            "title": title[:200],
+        })
+        print(f"  ✓ {title[:60]}")
+
+        if depth < MAX_DEPTH:
+            for link in parser.links[:30]:
+                nl = normalize_url(link)
+                if nl not in visited and is_valid_url(nl):
+                    queue.append((nl, depth + 1))
+
+    return results
+
+
+# ── エントリポイント ──────────────────────────────────────
+
+if __name__ == "__main__":
+    pages = crawl()
+
+    with open(OUTPUT_FILE, "w", encoding="utf-8") as f:
+        json.dump(pages, f, ensure_ascii=False, indent=2)
+
+    print(f"\n✅ 完了！  {len(pages)} ページ → {OUTPUT_FILE}")
