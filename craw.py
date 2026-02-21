@@ -10,10 +10,11 @@ import json
 import csv
 import time
 import ssl
+import sys
 import urllib.request
 import xml.etree.ElementTree as ET
 from collections import deque
-from urllib.parse import urljoin, urlparse, urlunparse
+from urllib.parse import urljoin, urlparse, urlunparse, quote
 from html.parser import HTMLParser
 from concurrent.futures import ThreadPoolExecutor, as_completed
 import threading
@@ -56,7 +57,7 @@ SEED_URLS = [
 
 
 ]
-MAX_PAGES   = 50000
+MAX_PAGES   = 1000
 MAX_DEPTH   = 3
 DELAY       = 0.01
 OUTPUT_FILE = "index.csv"
@@ -117,6 +118,35 @@ def is_valid_url(url):
         return True
     except Exception:
         return False
+
+
+def load_existing_urls(filename):
+    """既存のCSVファイルからURLを読み込む"""
+    visited = set()
+    try:
+        with open(filename, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                if row.get("url"):
+                    visited.add(normalize_url(row["url"]))
+        print(f"[INFO] 既存の{len(visited)}件を読み込みました")
+    except FileNotFoundError:
+        print(f"[INFO] {filename}はまだ存在しません。新規作成します")
+    return visited
+
+def generate_search_urls(keyword):
+    """キーワードに基づいた検索URLを生成"""
+    search_urls = [
+        f"https://www.google.com/search?q={quote(keyword)}",
+        f"https://www.bing.com/search?q={quote(keyword)}",
+        f"https://duckduckgo.com/?q={quote(keyword)}",
+        f"https://github.com/search?q={quote(keyword)}",
+        f"https://stackoverflow.com/search?q={quote(keyword)}",
+        f"https://zenn.dev/search?q={quote(keyword)}",
+        f"https://qiita.com/search?q={quote(keyword)}",
+    ]
+    print(f"[INFO] キーワード'{keyword}'に基づいた検索URLを追加")
+    return search_urls
 
 
 # ── robots.txt チェック ───────────────────────────────────
@@ -266,7 +296,7 @@ class SharedState:
         with self.lock:
             return url in self.visited
 
-def crawl_domain(domain, urls, shared_state, robots):
+def crawl_domain(domain, urls, shared_state, robots, keyword=None):
     """特定ドメインをクロール"""
     domain_last = 0
     local_visited = set()
@@ -319,26 +349,48 @@ def crawl_domain(domain, urls, shared_state, robots):
             "title": title[:200],
         }):
             # 実際に追加された場合のみ表示
-            print(f"  ✓ {title[:60] if title else '(no title)'}")
+            is_keyword_match = keyword and (keyword.lower() in title.lower() or keyword.lower() in url.lower())
+            marker = "[KEY]" if is_keyword_match else "  ✓"
+            print(f"  {marker} {title[:60] if title else '(no title)'}")
         else:
             # 重複の場合
             print(f"  [DUP] {title[:60] if title else '(no title)'}")
         
         # 新しいリンクをキューに追加
+        # キーワードを含むリンクを優先して処理
+        keyword_links = []
+        other_links = []
         for link in parser.links[:30]:
             nl = normalize_url(link)
             new_domain = urlparse(nl).netloc
             if not shared_state.is_visited(nl) and is_valid_url(nl):
                 if new_domain == domain:
-                    urls.append(nl)
+                    if keyword and keyword.lower() in nl.lower():
+                        keyword_links.append(nl)
+                    else:
+                        other_links.append(nl)
+        
+        # キーワードリンクを先粗に処理
+        if keyword:
+            urls = keyword_links + other_links + urls
+        else:
+            urls = other_links + urls
 
-def crawl():
+def crawl(keyword=None):
     robots = RobotsTxtParser()
     shared_state = SharedState()
     domain_queues = {}
     
+    # 既存のCSVから訪問済みURLを読み込む
+    existing_urls = load_existing_urls(OUTPUT_FILE)
+    shared_state.visited.update(existing_urls)
+    
     # 各ドメインのキューを初期化
-    for seed in SEED_URLS:
+    seed_list = SEED_URLS.copy()
+    if keyword:
+        seed_list.extend(generate_search_urls(keyword))
+    
+    for seed in seed_list:
         seed = normalize_url(seed)
         domain = urlparse(seed).netloc
         print(f"robots.txt 取得中: {domain}")
@@ -353,13 +405,17 @@ def crawl():
             if urlparse(u).netloc == domain:
                 domain_queues[domain].append(u)
     
-    print(f"\nクロール開始  最大{MAX_PAGES}ページ / 深さ{MAX_DEPTH}\n")
+    print(f"\nクロール開始  最大{MAX_PAGES}ページ / 深さ{MAX_DEPTH}")
+    if keyword:
+        print(f"🔍 キーワード: '{keyword}' \n")
+    else:
+        print()
     
     # ThreadPoolExecutorで並列処理
     with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
         futures = []
         for domain, urls in domain_queues.items():
-            future = executor.submit(crawl_domain, domain, urls, shared_state, robots)
+            future = executor.submit(crawl_domain, domain, urls, shared_state, robots, keyword)
             futures.append(future)
         
         # すべてのスレッドが完了するのを待つ
@@ -375,12 +431,29 @@ def crawl():
 # ── エントリポイント ──────────────────────────────────────
 
 if __name__ == "__main__":
-    pages = crawl()
+    # コマンドライン引数でキーワードを取得
+    keyword = sys.argv[1] if len(sys.argv) > 1 else None
+    
+    pages = crawl(keyword=keyword)
 
-    # CSVフォーマットで出力
+    # CSVフォーマットで出力（既存ファイルがあれば追加）
+    try:
+        existing_pages = []
+        with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            existing_pages = list(reader) if reader else []
+    except FileNotFoundError:
+        existing_pages = []
+    
+    # 既存と新規を設合
+    existing_urls = {p["url"] for p in existing_pages}
+    new_pages = [p for p in pages if p["url"] not in existing_urls]
+    
+    all_pages = existing_pages + new_pages
+    
     with open(OUTPUT_FILE, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["url", "title"])
         writer.writeheader()
-        writer.writerows(pages)
+        writer.writerows(all_pages)
 
-    print(f"\n✅ 完了！  {len(pages)} ページ → {OUTPUT_FILE}")
+    print(f"\n✅ 完了！  追加: {len(new_pages)} / 合計: {len(all_pages)} ページ → {OUTPUT_FILE}")
