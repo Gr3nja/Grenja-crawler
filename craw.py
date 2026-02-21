@@ -41,16 +41,22 @@ SEED_URLS = [
     "https://slashdot.org/",
     "https://news.ycombinator.com/",
     "https://arxiv.org/",
-    # Q&A・コミュニティ
+    # その他
     "https://www.quora.com/",
-    # ブログ
     "https://www.tumblr.com/",
     "https://wordpress.com/",
     "https://www.blogger.com/",
     "https://readthedocs.org/",
     "https://github.com/Gr3nja/",
+    "https://ja.wikipedia.org/wiki/",
+    "https://www.yahoo.co.jp/",
+    "https://www.facebook.com/",
+    "https://www.cloudflare.com/ja-jp/",
+    "https://claude.ai/",
+
+
 ]
-MAX_PAGES   = 3000
+MAX_PAGES   = 50000
 MAX_DEPTH   = 3
 DELAY       = 0.01
 OUTPUT_FILE = "index.csv"
