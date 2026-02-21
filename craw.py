@@ -21,12 +21,10 @@ from html.parser import HTMLParser
 SEED_URLS = [
     "https://zenn.dev/",
     "https://qiita.com/",
-    "https://developer.mozilla.org/ja/",
-    "https://docs.python.org/ja/",
 ]
-MAX_PAGES   = 20
+MAX_PAGES   = 100
 MAX_DEPTH   = 2
-DELAY       = 0.1
+DELAY       = 00.1
 OUTPUT_FILE = "index.json"
 # =============================================
 

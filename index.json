@@ -78,5 +78,325 @@
   {
     "url": "https://zenn.dev/t_honda/articles/loveit-ai-voice-pipeline",
     "title": "\"ビビる大木AI\"を生放送で喋らせた全技術 — ラヴィット!裏側"
+  },
+  {
+    "url": "https://zenn.dev/moomindani/articles/5b4ee6d4f33b44",
+    "title": "Amazonでの12年間を振り返る"
+  },
+  {
+    "url": "https://zenn.dev/happy_elements/articles/da2dda3618425c",
+    "title": "【Claude Code】Agent Teamsに「ホワイトボード」を1つ置いたら、分業が協働に変わった"
+  },
+  {
+    "url": "https://qiita.com/",
+    "title": "Qiita"
+  },
+  {
+    "url": "https://zenn.dev/articles/explore",
+    "title": "記事を探す | Zenn"
+  },
+  {
+    "url": "https://zenn.connpass.com/event/383681/",
+    "title": "Zenncafe#6日比谷 - AIコーディングの現在地 - connpass"
+  },
+  {
+    "url": "https://zenn.dev/events",
+    "title": "イベント一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/books/explore",
+    "title": "本を探す | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/about",
+    "title": "Zennとは？｜エンジニアのための情報共有コミュニティ"
+  },
+  {
+    "url": "https://classmethod.jp",
+    "title": "クラスメソッド株式会社"
+  },
+  {
+    "url": "https://info.zenn.dev",
+    "title": "What's New in Zenn"
+  },
+  {
+    "url": "https://zenn.dev/manual",
+    "title": "使い方 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/biz-lp",
+    "title": "Zennの法人向けメニュー | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/publications",
+    "title": "Publication | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/faq",
+    "title": "よくある質問 | Zenn"
+  },
+  {
+    "url": "https://twitter.com/zenn_dev",
+    "title": "https://twitter.com/zenn_dev"
+  },
+  {
+    "url": "https://github.com/zenn-dev",
+    "title": "Zenn · GitHubX"
+  },
+  {
+    "url": "https://zenn.dev/mediakit",
+    "title": "メディアキット | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/terms",
+    "title": "利用規約 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/privacy",
+    "title": "プライバシーポリシー | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/terms/transaction-law",
+    "title": "特定商取引法に基づく表記 | Zenn"
+  },
+  {
+    "url": "https://classmethod.jp/",
+    "title": "クラスメソッド株式会社"
+  },
+  {
+    "url": "https://zenn.dev/p/tokyotech_lm",
+    "title": "tokyotech-llm | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/kaz20",
+    "title": "Kazuki Fujiiさんの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://twitter.com/intent/tweet?url=https://zenn.dev/tokyotech_lm/articles/fa56f10e51fd7d&text=Qwen3-Swallow%20%26%20GPT-OSS-Swallow%EF%BD%9CKazuki%20Fujii&hashtags=zenn",
+    "title": "https://twitter.com/intent/tweet?url=https://zenn.dev/tokyotech_lm/articles/fa56f10e51fd7d&text=Qwen3-Swallow%20%26%20GPT-OSS-Swallow%EF%BD%9CKazuki%20Fujii&hashtags=zenn"
+  },
+  {
+    "url": "https://b.hatena.ne.jp/add?mode=confirm&url=https://zenn.dev/tokyotech_lm/articles/fa56f10e51fd7d&title=Qwen3-Swallow%20%26%20GPT-OSS-Swallow%EF%BD%9CKazuki%20Fujii",
+    "title": "ページをブックマークして共有する - はてなブックマーク"
+  },
+  {
+    "url": "https://zenn.dev/topics/python",
+    "title": "Pythonの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/pytorch",
+    "title": "PyTorchの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/%E5%88%86%E6%95%A3%E5%AD%A6%E7%BF%92",
+    "title": "分散学習の記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/llm",
+    "title": "大規模言語モデルの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/rlvr",
+    "title": "RLVRの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/tech-or-idea",
+    "title": "投稿カテゴリー「Tech」「Idea」の選び方 | Zenn"
+  },
+  {
+    "url": "https://okoge-kaz.github.io/",
+    "title": "Kazuki Fujii"
+  },
+  {
+    "url": "https://swallow-llm.github.io/index.en.html",
+    "title": "Swallow LLM — Open Japanese LLMs from academic research and development"
+  },
+  {
+    "url": "https://huggingface.co/collections/tokyotech-llm/qwen3-swallow-v02",
+    "title": "Qwen3-Swallow-v0.2 - a tokyotech-llm Collection"
+  },
+  {
+    "url": "https://huggingface.co/collections/tokyotech-llm/gpt-oss-swallow-v01",
+    "title": "GPT-OSS-Swallow-v0.1 - a tokyotech-llm Collection"
+  },
+  {
+    "url": "https://huggingface.co/collections/Qwen/qwen3",
+    "title": "Qwen3 - a Qwen Collection"
+  },
+  {
+    "url": "https://huggingface.co/collections/openai/gpt-oss",
+    "title": "gpt-oss - a openai Collection"
+  },
+  {
+    "url": "https://swallow-llm.github.io/qwen3-swallow.en.html",
+    "title": "Qwen3 Swallow — Swallow LLM"
+  },
+  {
+    "url": "https://swallow-llm.github.io/gptoss-swallow.en.html",
+    "title": "GPT-OSS Swallow — Swallow LLM"
+  },
+  {
+    "url": "https://swallow-llm.github.io/leaderboard/",
+    "title": "Redirecting…"
+  },
+  {
+    "url": "https://huggingface.co/tokyotech-llm/Qwen3-Swallow-32B-RL-v0.2",
+    "title": "tokyotech-llm/Qwen3-Swallow-32B-RL-v0.2 · Hugging Face"
+  },
+  {
+    "url": "https://zenn.dev/p/neoai",
+    "title": "neoAI | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/yut_kt",
+    "title": "ka10utaさんの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://twitter.com/intent/tweet?url=https://zenn.dev/neoai/articles/2b8ee68d99e545&text=%E3%83%A2%E3%82%B8%E3%83%A5%E3%83%A9%E3%83%A2%E3%83%8E%E3%83%AA%E3%82%B9%E3%81%A7%E6%80%A5%E6%88%90%E9%95%B7SaaS%E3%82%92%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%AB%20-%20%E3%83%9E%E3%82%A4%E3%82%AF%E3%83%AD%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9%E7%A7%BB%E8%A1%8C%E3%81%AE%E5%88%A4%E6%96%AD%E5%9F%BA%E6%BA%96%EF%BD%9Cka10uta&hashtags=zenn",
+    "title": "https://twitter.com/intent/tweet?url=https://zenn.dev/neoai/articles/2b8ee68d99e545&text=%E3%83%A2%E3%82%B8%E3%83%A5%E3%83%A9%E3%83%A2%E3%83%8E%E3%83%AA%E3%82%B9%E3%81%A7%E6%80%A5%E6%88%90%E9%95%B7Saa"
+  },
+  {
+    "url": "https://b.hatena.ne.jp/add?mode=confirm&url=https://zenn.dev/neoai/articles/2b8ee68d99e545&title=%E3%83%A2%E3%82%B8%E3%83%A5%E3%83%A9%E3%83%A2%E3%83%8E%E3%83%AA%E3%82%B9%E3%81%A7%E6%80%A5%E6%88%90%E9%95%B7SaaS%E3%82%92%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%AB%20-%20%E3%83%9E%E3%82%A4%E3%82%AF%E3%83%AD%E3%82%B5%E3%83%BC%E3%83%93%E3%82%B9%E7%A7%BB%E8%A1%8C%E3%81%AE%E5%88%A4%E6%96%AD%E5%9F%BA%E6%BA%96%EF%BD%9Cka10uta",
+    "title": "ページをブックマークして共有する - はてなブックマーク"
+  },
+  {
+    "url": "https://zenn.dev/topics/microservices",
+    "title": "マイクロサービスの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/architecture",
+    "title": "architectureの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/saas",
+    "title": "SaaSの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/modularmonolith",
+    "title": "モジュラーモノリスの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://byteiota.com/modular-monolith-42-ditch-microservices-in-2026/",
+    "title": "Modular Monolith: 42% Ditch Microservices in 2026 | byteiota"
+  },
+  {
+    "url": "https://www.aalpha.net/blog/multi-tenant-architecture-in-microservices/",
+    "title": "Multi-tenant Architecture in Microservices - 2026 : Aalpha"
+  },
+  {
+    "url": "https://fullscale.io/blog/microservices-team-management/",
+    "title": "The Architecture Decision That Saved Us $2M ( Why Microservices Team Management Nearly Destroyed Our Startup)"
+  },
+  {
+    "url": "https://zenn.dev/yostos",
+    "title": "yostosさんの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://twitter.com/intent/tweet?url=https://zenn.dev/yostos/articles/cloudflare-benefits&text=Cloudflare%E7%84%A1%E6%96%99%E3%83%97%E3%83%A9%E3%83%B3%E3%81%A0%E3%81%91%E3%81%A7%E5%80%8B%E4%BA%BA%E3%82%B5%E3%82%A4%E3%83%88%E3%81%AE%E3%82%BB%E3%82%AD%E3%83%A5%E3%83%AA%E3%83%86%E3%82%A3%E3%81%8C%E5%AE%8C%E7%B5%90%E3%81%97%E3%81%9F%E8%A9%B1%EF%BD%9Cyostos&hashtags=zenn",
+    "title": "https://twitter.com/intent/tweet?url=https://zenn.dev/yostos/articles/cloudflare-benefits&text=Cloudflare%E7%84%A1%E6%96%99%E3%83%97%E3%83%A9%E3%83%B3%E3%81%A0%E3%81%91%E3%81%A7%E5%80%8B%E4%BA%BA%E3%8"
+  },
+  {
+    "url": "https://zenn.dev/topics/security",
+    "title": "Securityの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/cloudflare",
+    "title": "Cloudflareの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/network",
+    "title": "Networkの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/yostos/articles/migration-to-cloudflare",
+    "title": "Zolaブログを新ドメイン取得 + Cloudflare移転"
+  },
+  {
+    "url": "https://blog.cloudflare.com/pages-and-workers-are-converging-into-one-experience/",
+    "title": "Bringing a unified developer experience to Cloudflare Workers and Pages"
+  },
+  {
+    "url": "https://github.com/yostos/zenn-contents/blob/main/articles/cloudflare-benefits.md",
+    "title": "zenn-contents/articles/cloudflare-benefits.md at main · yostos/zenn-contents · GitHub"
+  },
+  {
+    "url": "https://zenn.dev/p/ubie_dev",
+    "title": "Ubie テックブログ | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/syucream",
+    "title": "syucreamさんの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://twitter.com/intent/tweet?url=https://zenn.dev/ubie_dev/articles/6b23a74187766b&text=%22%E4%B8%96%E7%95%8C%E5%A4%89%E3%82%8F%E3%82%8B%22%E2%80%94%E2%80%94%E9%9D%9E%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%8B%E3%82%A2%E3%81%A7%E3%82%82%E3%81%A7%E3%81%8D%E3%82%8B%E3%80%81%20Claude%20Code%20%E3%81%AB%E3%82%88%E3%82%8B%20n8n%20%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E9%96%8B%E7%99%BA%EF%BD%9Csyucream&hashtags=zenn",
+    "title": "https://twitter.com/intent/tweet?url=https://zenn.dev/ubie_dev/articles/6b23a74187766b&text=%22%E4%B8%96%E7%95%8C%E5%A4%89%E3%82%8F%E3%82%8B%22%E2%80%94%E2%80%94%E9%9D%9E%E3%82%A8%E3%83%B3%E3%82%B8%E3"
+  },
+  {
+    "url": "https://b.hatena.ne.jp/add?mode=confirm&url=https://zenn.dev/ubie_dev/articles/6b23a74187766b&title=%22%E4%B8%96%E7%95%8C%E5%A4%89%E3%82%8F%E3%82%8B%22%E2%80%94%E2%80%94%E9%9D%9E%E3%82%A8%E3%83%B3%E3%82%B8%E3%83%8B%E3%82%A2%E3%81%A7%E3%82%82%E3%81%A7%E3%81%8D%E3%82%8B%E3%80%81%20Claude%20Code%20%E3%81%AB%E3%82%88%E3%82%8B%20n8n%20%E3%83%AF%E3%83%BC%E3%82%AF%E3%83%95%E3%83%AD%E3%83%BC%E9%96%8B%E7%99%BA%EF%BD%9Csyucream",
+    "title": "ページをブックマークして共有する - はてなブックマーク"
+  },
+  {
+    "url": "https://zenn.dev/topics/n8n",
+    "title": "n8nの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/claudecode",
+    "title": "Claude Codeの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/topics/agentskills",
+    "title": "Agent Skillsの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://ubie.life/",
+    "title": "Ubie（ユビー）株式会社"
+  },
+  {
+    "url": "https://x.com/syu_cream",
+    "title": "https://x.com/syu_cream"
+  },
+  {
+    "url": "https://zenn.dev/ubie_dev/articles/6fd1dd202c0e07",
+    "title": "「コミュニケーションの交差点」に配置して浸透する、社内生成 AI プラットフォーム"
+  },
+  {
+    "url": "https://zenn.dev/ubie_dev/articles/ccd18a2f911706",
+    "title": "n8nを用いて社内業務のドラスティックな業務改善を狙おう！ ~導入編~"
+  },
+  {
+    "url": "https://github.com/czlonkowski/n8n-skills",
+    "title": "GitHub - czlonkowski/n8n-skills: n8n skillset for Claude Code to build flawless n8n workflows"
+  },
+  {
+    "url": "https://github.com/ubie-oss/n8n-cli",
+    "title": "GitHub - ubie-oss/n8n-cli: A standalone CLI tool for n8n"
+  },
+  {
+    "url": "https://docs.n8n.io/hosting/cli-commands/",
+    "title": "CLI commands | n8n Docs"
+  },
+  {
+    "url": "https://docs.n8n.io/advanced-ai/ai-workflow-builder/",
+    "title": "AI Workflow Builder | n8n Docs"
+  },
+  {
+    "url": "https://zenn.dev/p/uniformnext",
+    "title": "ユニフォームネクスト株式会社 | Zenn"
+  },
+  {
+    "url": "https://zenn.dev/taku_271",
+    "title": "takumiさんの記事一覧 | Zenn"
+  },
+  {
+    "url": "https://twitter.com/intent/tweet?url=https://zenn.dev/uniformnext/articles/neovim-in-docker&text=%E7%92%B0%E5%A2%83%E3%82%92%E5%85%A5%E3%82%8C%E3%81%9F%E3%81%8F%E3%81%AA%E3%81%84%E7%A7%81%20vs%20%E7%92%B0%E5%A2%83%E3%82%92%E5%85%A5%E3%82%8C%E3%81%95%E3%81%9B%E3%82%8BNeovim%EF%BD%9Ctakumi&hashtags=zenn",
+    "title": "https://twitter.com/intent/tweet?url=https://zenn.dev/uniformnext/articles/neovim-in-docker&text=%E7%92%B0%E5%A2%83%E3%82%92%E5%85%A5%E3%82%8C%E3%81%9F%E3%81%8F%E3%81%AA%E3%81%84%E7%A7%81%20vs%20%E7%9"
+  },
+  {
+    "url": "https://b.hatena.ne.jp/add?mode=confirm&url=https://zenn.dev/uniformnext/articles/neovim-in-docker&title=%E7%92%B0%E5%A2%83%E3%82%92%E5%85%A5%E3%82%8C%E3%81%9F%E3%81%8F%E3%81%AA%E3%81%84%E7%A7%81%20vs%20%E7%92%B0%E5%A2%83%E3%82%92%E5%85%A5%E3%82%8C%E3%81%95%E3%81%9B%E3%82%8BNeovim%EF%BD%9Ctakumi",
+    "title": "ページをブックマークして共有する - はてなブックマーク"
+  },
+  {
+    "url": "https://zenn.dev/topics/docker",
+    "title": "Dockerの記事一覧 | Zenn"
   }
 ]
