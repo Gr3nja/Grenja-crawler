@@ -52,7 +52,7 @@ SEED_URLS = [
     "https://readthedocs.org/",
     "https://github.com/Gr3nja/",
 ]
-MAX_PAGES   = 1000
+MAX_PAGES   = 30000
 MAX_DEPTH   = 3
 DELAY       = 0.01
 OUTPUT_FILE = "index.json"
