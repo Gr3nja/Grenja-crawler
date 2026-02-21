@@ -1,0 +1,82 @@
+[
+  {
+    "url": "https://zenn.dev/",
+    "title": "Zenn｜エンジニアのための情報共有コミュニティ"
+  },
+  {
+    "url": "https://zenn.dev",
+    "title": "Zenn｜エンジニアのための情報共有コミュニティ"
+  },
+  {
+    "url": "https://zenn.dev/tokyotech_lm/articles/fa56f10e51fd7d",
+    "title": "Qwen3-Swallow & GPT-OSS-Swallow"
+  },
+  {
+    "url": "https://zenn.dev/neoai/articles/2b8ee68d99e545",
+    "title": "モジュラモノリスで急成長SaaSをスケール - マイクロサービス移行の判断基準"
+  },
+  {
+    "url": "https://zenn.dev/yostos/articles/cloudflare-benefits",
+    "title": "Cloudflare無料プランだけで個人サイトのセキュリティが完結した話"
+  },
+  {
+    "url": "https://zenn.dev/ubie_dev/articles/6b23a74187766b",
+    "title": "\"世界変わる\"——非エンジニアでもできる、 Claude Code による n8n ワークフロー開発"
+  },
+  {
+    "url": "https://zenn.dev/uniformnext/articles/neovim-in-docker",
+    "title": "環境を入れたくない私 vs 環境を入れさせるNeovim"
+  },
+  {
+    "url": "https://zenn.dev/knowledgework/articles/knip-with-ai-agent",
+    "title": "AIエージェント × knipで無駄コードを簡単に掃除"
+  },
+  {
+    "url": "https://zenn.dev/microsoft/articles/github-copilot-cli-pptx",
+    "title": "図形フル活用の PowerPoint を GitHub Copilot に読ませてみた"
+  },
+  {
+    "url": "https://zenn.dev/4geru/books/mcp-line-handson",
+    "title": "【MCP×LINE】AIに「LINEを送る力」を授けよう！"
+  },
+  {
+    "url": "https://zenn.dev/rabee/articles/2d9ab1789b707d",
+    "title": "プログラミングが「全くできない人」の頭の中を解剖してみた"
+  },
+  {
+    "url": "https://zenn.dev/morisawa/articles/08e848e52539c3",
+    "title": "斜体はどうして選択範囲からはみ出るの？"
+  },
+  {
+    "url": "https://zenn.dev/steelydylan/articles/why-i-created-gut-cli",
+    "title": "gitのちょっとした手間を解決するCLI、gut-cliを作りました"
+  },
+  {
+    "url": "https://zenn.dev/qn_tech/articles/8d0a5f91612037",
+    "title": "Rust で蔵書管理アプリをつくってみた"
+  },
+  {
+    "url": "https://zenn.dev/ubie_dev/articles/9258ddaa5f8caa",
+    "title": "クラウド型コーディングエージェントの時代がまた来る"
+  },
+  {
+    "url": "https://zenn.dev/applibot_tech/articles/0e3889b25fd56b",
+    "title": "Claude CodeのようなAI エージェントにEC2を安全に調査させるSSMガードレールの設計"
+  },
+  {
+    "url": "https://zenn.dev/atrae/articles/d3d31ad0413bf3",
+    "title": "シニアエンジニアが呼吸するようにやっている「調査 / 切り分けの思考の型」"
+  },
+  {
+    "url": "https://zenn.dev/pepabo/articles/ai-pr-review-bottleneck",
+    "title": "PRのレビューが追いつかない！もう人間がボトルネックなので、気合いではなく仕組みで少しずつなんとかしていく"
+  },
+  {
+    "url": "https://zenn.dev/aiforall/articles/e5733531811e0e",
+    "title": "話題のmicrogptを早速試してみる"
+  },
+  {
+    "url": "https://zenn.dev/t_honda/articles/loveit-ai-voice-pipeline",
+    "title": "\"ビビる大木AI\"を生放送で喋らせた全技術 — ラヴィット!裏側"
+  }
+]
