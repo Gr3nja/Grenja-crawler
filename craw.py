@@ -14,6 +14,8 @@ import xml.etree.ElementTree as ET
 from collections import deque
 from urllib.parse import urljoin, urlparse, urlunparse
 from html.parser import HTMLParser
+from concurrent.futures import ThreadPoolExecutor, as_completed
+import threading
 
 # =============================================
 #                    設定
@@ -21,11 +23,21 @@ from html.parser import HTMLParser
 SEED_URLS = [
     "https://zenn.dev/",
     "https://qiita.com/",
+    "https://github.com/",
+    "https://stackoverflow.com/",
+    "https://dev.to/",
+    "https://medium.com/",
+    "https://note.com/",
+    "https://github.com/Gr3nja/",
+    "https://www.reddit.com/",
+    "https://x.com/",
+    "https://youtube.com/",
 ]
-MAX_PAGES   = 100
-MAX_DEPTH   = 2
-DELAY       = 00.1
+MAX_PAGES   = 10000
+MAX_DEPTH   = 5
+DELAY       = 0.01
 OUTPUT_FILE = "index.json"
+MAX_WORKERS = 10  # 並列スレッド数
 # =============================================
 
 
@@ -205,75 +217,125 @@ def fetch_page(url):
 
 # ── メインクローラー ──────────────────────────────────────
 
-def crawl():
-    robots = RobotsTxtParser()
-    visited = set()
-    seen_urls = set()   # URLベースで重複排除（タイトルではなくURL）
-    queue = deque()
-    results = []
+class SharedState:
+    """複数スレッド間で共有する状態"""
+    def __init__(self):
+        self.visited = set()
+        self.results = []
+        self.lock = threading.Lock()
+    
+    def add_result(self, item):
+        with self.lock:
+            self.results.append(item)
+    
+    def mark_visited(self, url):
+        with self.lock:
+            self.visited.add(url)
+    
+    def is_visited(self, url):
+        with self.lock:
+            return url in self.visited
 
-    for seed in SEED_URLS:
-        seed = normalize_url(seed)
-        domain = urlparse(seed).netloc
-        print(f"robots.txt 取得中: {domain}")
-        robots.fetch(domain)
-        queue.append((seed, 0))
-        for u in fetch_sitemap(domain) + fetch_rss(domain):
-            queue.append((u, 1))
-
-    print(f"\nクロール開始  最大{MAX_PAGES}ページ / 深さ{MAX_DEPTH}\n")
-
-    domain_last = {}
-
-    while queue and len(results) < MAX_PAGES:
-        url, depth = queue.popleft()
+def crawl_domain(domain, urls, shared_state, robots):
+    """特定ドメインをクロール"""
+    domain_last = 0
+    local_visited = set()
+    
+    while urls:
+        if len(shared_state.results) >= MAX_PAGES:
+            break
+        
+        url = urls.pop(0)
         url = normalize_url(url)
-
-        if url in visited:
+        
+        if url in local_visited or shared_state.is_visited(url):
             continue
         if not is_valid_url(url):
             continue
         if not robots.can_fetch(url):
-            print(f"  [SKIP] robots.txtで禁止: {url}")
             continue
-
-        visited.add(url)
-        domain = urlparse(url).netloc
-
+        
+        local_visited.add(url)
+        shared_state.mark_visited(url)
+        
         # クロール遅延
         delay = robots.crawl_delay(domain)
-        wait = delay - (time.time() - domain_last.get(domain, 0))
+        wait = delay - (time.time() - domain_last)
         if wait > 0:
             time.sleep(wait)
-        domain_last[domain] = time.time()
-
-        print(f"[{len(results)+1}/{MAX_PAGES}] {url}")
+        domain_last = time.time()
+        
+        with shared_state.lock:
+            page_num = len(shared_state.results) + 1
+            if page_num > MAX_PAGES:
+                break
+            print(f"[{page_num}/{MAX_PAGES}] {url}")
+        
         html = fetch_page(url)
         if not html:
             continue
-
+        
         parser = ContentParser(url)
         try:
             parser.feed(html)
         except Exception as e:
             print(f"  [SKIP] パース失敗: {e}")
             continue
-
-        title = parser.title.strip() or url  # タイトルがなければURLを使う
-
-        results.append({
+        
+        title = parser.title.strip()  # タイトルが空の場合は空文字列を使う
+        
+        shared_state.add_result({
             "url":   url,
             "title": title[:200],
         })
-        print(f"  ✓ {title[:60]}")
+        print(f"  ✓ {title[:60] if title else '(no title)'}")
+        
+        # 新しいリンクをキューに追加
+        for link in parser.links[:30]:
+            nl = normalize_url(link)
+            new_domain = urlparse(nl).netloc
+            if not shared_state.is_visited(nl) and is_valid_url(nl):
+                if new_domain == domain:
+                    urls.append(nl)
 
-        if depth < MAX_DEPTH:
-            for link in parser.links[:30]:
-                nl = normalize_url(link)
-                if nl not in visited and is_valid_url(nl):
-                    queue.append((nl, depth + 1))
-
-    return results
+def crawl():
+    robots = RobotsTxtParser()
+    shared_state = SharedState()
+    domain_queues = {}
+    
+    # 各ドメインのキューを初期化
+    for seed in SEED_URLS:
+        seed = normalize_url(seed)
+        domain = urlparse(seed).netloc
+        print(f"robots.txt 取得中: {domain}")
+        robots.fetch(domain)
+        
+        if domain not in domain_queues:
+            domain_queues[domain] = []
+        domain_queues[domain].append(seed)
+        
+        # サイトマップとRSSを取得
+        for u in fetch_sitemap(domain) + fetch_rss(domain):
+            if urlparse(u).netloc == domain:
+                domain_queues[domain].append(u)
+    
+    print(f"\nクロール開始  最大{MAX_PAGES}ページ / 深さ{MAX_DEPTH}\n")
+    
+    # ThreadPoolExecutorで並列処理
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = []
+        for domain, urls in domain_queues.items():
+            future = executor.submit(crawl_domain, domain, urls, shared_state, robots)
+            futures.append(future)
+        
+        # すべてのスレッドが完了するのを待つ
+        for future in as_completed(futures):
+            try:
+                future.result()
+            except Exception as e:
+                print(f"スレッドエラー: {e}")
+    
+    return shared_state.results
 
 
 # ── エントリポイント ──────────────────────────────────────
