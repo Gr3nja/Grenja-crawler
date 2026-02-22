@@ -29,20 +29,10 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://ja.wikipedia.org/",
-    "https://ja.wikipedia.org/wiki/メインページ",
-    "https://ja.wiktionary.org/",
-    "https://kotobank.jp/",
-    "https://www.weblio.jp/",
-    "https://dictionary.goo.ne.jp/",
-        "https://www.asahi.com/",
-    "https://www.yomiuri.co.jp/",
-    "https://mainichi.jp/",
-    "https://www.nikkei.com/",
-    "https://news.yahoo.co.jp/",
+    "https://cookpad.com/jp",
 ]
 MAX_PAGES       = 5000
-MAX_DEPTH       = 4
+MAX_DEPTH       = 6
 TIMEOUT         = 5       # 1リクエストのタイムアウト（秒）
 OUTPUT_FILE     = "index.csv"
 MAX_CONCURRENT  = 100     # 同時リクエスト数（増やすほど速い・増やしすぎるとBANリスク）
