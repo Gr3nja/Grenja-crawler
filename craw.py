@@ -3,7 +3,8 @@ crawler.py - シンプルWebクローラー
 実行すると index.csv に結果を書き込みます
 
 使い方:
-  python crawler.py   （標準ライブラリのみ・pip不要）
+  python crawler.py           （標準ライブラリのみ・pip不要）
+  python crawler.py keyword   （キーワード付きクロール）
 """
 
 import json
@@ -13,7 +14,7 @@ import ssl
 import sys
 import urllib.request
 import xml.etree.ElementTree as ET
-from collections import deque
+from queue import Queue, Empty
 from urllib.parse import urljoin, urlparse, urlunparse, quote
 from html.parser import HTMLParser
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -25,43 +26,15 @@ import threading
 SEED_URLS = [
     # 日本語サイト
     "https://ja.wikipedia.org/",
-    "https://zenn.dev/",
-    "https://qiita.com/",
-    "https://note.com/",
-    # 海外サイト - 百科事典
     "https://en.wikipedia.org/",
-    # 海外サイト - ニュース
-    "https://www.bbc.com/",
-    "https://www.cnn.com/",
-    "https://news.google.com/",
-    # 技術系
-    "https://github.com/",
-    "https://dev.to/",
-    "https://www.techcrunch.com/",
-    "https://www.wired.com/",
-    "https://slashdot.org/",
-    "https://news.ycombinator.com/",
-    "https://arxiv.org/",
-    # その他
-    "https://www.quora.com/",
-    "https://www.tumblr.com/",
-    "https://wordpress.com/",
-    "https://www.blogger.com/",
-    "https://readthedocs.org/",
-    "https://github.com/Gr3nja/",
-    "https://ja.wikipedia.org/wiki/",
-    "https://www.yahoo.co.jp/",
-    "https://www.facebook.com/",
-    "https://www.cloudflare.com/ja-jp/",
-    "https://claude.ai/",
-
 
 ]
 MAX_PAGES   = 1000
 MAX_DEPTH   = 3
-DELAY       = 0.01
+DELAY       = 0.0     # robots.txt の Crawl-delay を優先するため0に
+TIMEOUT     = 5       # 遅いサイトを早く諦める（秒）
 OUTPUT_FILE = "index.csv"
-MAX_WORKERS = 10  # 並列スレッド数
+MAX_WORKERS = 64      # 並列スレッド数（増やすほど速い、増やしすぎるとBANリスク）
 # =============================================
 
 
@@ -155,17 +128,23 @@ class RobotsTxtParser:
     def __init__(self):
         self._disallowed = {}
         self._delay = {}
+        self._lock = threading.Lock()  # スレッドセーフのために追加
 
     def fetch(self, domain):
-        if domain in self._disallowed:
-            return
-        self._disallowed[domain] = []
+        with self._lock:
+            if domain in self._disallowed:
+                return
+            # プレースホルダーをセットして二重取得を防ぐ
+            self._disallowed[domain] = []
+
         try:
             url = f"https://{domain}/robots.txt"
             req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
             with urllib.request.urlopen(req, timeout=5, context=_ssl_ctx) as res:
                 text = res.read().decode("utf-8", errors="ignore")
             current_agent = None
+            disallowed = []
+            delay = None
             for line in text.splitlines():
                 line = line.split("#")[0].strip()
                 if not line:
@@ -177,12 +156,16 @@ class RobotsTxtParser:
                 if directive == "user-agent":
                     current_agent = value
                 elif directive == "disallow" and current_agent == "*" and value:
-                    self._disallowed[domain].append(value)
+                    disallowed.append(value)
                 elif directive == "crawl-delay" and current_agent == "*":
                     try:
-                        self._delay[domain] = float(value)
+                        delay = float(value)
                     except ValueError:
                         pass
+            with self._lock:
+                self._disallowed[domain] = disallowed
+                if delay is not None:
+                    self._delay[domain] = delay
         except Exception as e:
             print(f"  [robots.txt] {domain} → {e}")
 
@@ -203,7 +186,6 @@ _ssl_ctx = ssl.create_default_context()
 _ssl_ctx.check_hostname = False
 _ssl_ctx.verify_mode = ssl.CERT_NONE
 
-# ブラウザに近いUser-Agentで弾かれにくくする
 HEADERS = {
     "User-Agent": (
         "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
@@ -214,9 +196,9 @@ HEADERS = {
     "Accept-Language": "ja,en;q=0.9",
 }
 
-def _open(url, timeout=10):
+def _open(url, timeout=None):
     req = urllib.request.Request(url, headers=HEADERS)
-    return urllib.request.urlopen(req, timeout=timeout, context=_ssl_ctx)
+    return urllib.request.urlopen(req, timeout=timeout or TIMEOUT, context=_ssl_ctx)
 
 
 # ── sitemap / RSS ─────────────────────────────────────────
@@ -259,7 +241,6 @@ def fetch_page(url):
         with _open(url) as res:
             ct = res.headers.get("Content-Type", "")
             if "text/html" not in ct:
-                print(f"  [SKIP] Content-Typeが対象外: {ct[:50]}  ({url})")
                 return None
             encoding = res.headers.get_content_charset("utf-8")
             return res.read().decode(encoding, errors="ignore")
@@ -268,192 +249,183 @@ def fetch_page(url):
         return None
 
 
-# ── メインクローラー ──────────────────────────────────────
+# ── 共有状態 ─────────────────────────────────────────────
 
 class SharedState:
-    """複数スレッド間で共有する状態"""
     def __init__(self):
         self.visited = set()
         self.results = []
-        self.seen_content = set()  # URL+タイトル組み合わせで重複排除
+        self.seen_content = set()
         self.lock = threading.Lock()
-    
+
     def add_result(self, item):
         with self.lock:
-            # URL+タイトルのハッシュで重複排除
+            # URLだけのキー（既存CSV由来）でも、URL+titleキーでも重複扱い
+            url_key = f"{item['url']}|"
             content_key = f"{item['url']}|{item['title']}"
-            if content_key not in self.seen_content:
-                self.seen_content.add(content_key)
-                self.results.append(item)
-                return True
-            return False
-    
+            if url_key in self.seen_content or content_key in self.seen_content:
+                return False
+            self.seen_content.add(url_key)
+            self.seen_content.add(content_key)
+            self.results.append(item)
+            return True
+
     def mark_visited(self, url):
         with self.lock:
             self.visited.add(url)
-    
+
     def is_visited(self, url):
         with self.lock:
             return url in self.visited
 
-def crawl_domain(domain, urls, shared_state, robots, keyword=None):
-    """特定ドメインをクロール"""
-    domain_last = 0
-    local_visited = set()
-    
-    while urls:
-        if len(shared_state.results) >= MAX_PAGES:
-            break
-        
-        url = urls.pop(0)
-        url = normalize_url(url)
-        
-        if url in local_visited or shared_state.is_visited(url):
-            continue
-        if not is_valid_url(url):
-            continue
-        if not robots.can_fetch(url):
-            continue
-        
-        local_visited.add(url)
-        shared_state.mark_visited(url)
-        
-        # クロール遅延
-        delay = robots.crawl_delay(domain)
-        wait = delay - (time.time() - domain_last)
-        if wait > 0:
-            time.sleep(wait)
-        domain_last = time.time()
-        
-        with shared_state.lock:
-            page_num = len(shared_state.results) + 1
-            if page_num > MAX_PAGES:
-                break
-            print(f"[{page_num}/{MAX_PAGES}] {url}")
-        
-        html = fetch_page(url)
-        if not html:
-            continue
-        
-        parser = ContentParser(url)
-        try:
-            parser.feed(html)
-        except Exception as e:
-            print(f"  [SKIP] パース失敗: {e}")
-            continue
-        
-        title = parser.title.strip()  # タイトルが空の場合は空文字列を使う
-        
-        if shared_state.add_result({
-            "url":   url,
-            "title": title[:200],
-        }):
-            # 実際に追加された場合のみ表示
-            is_keyword_match = keyword and (keyword.lower() in title.lower() or keyword.lower() in url.lower())
-            marker = "[KEY]" if is_keyword_match else "  ✓"
-            print(f"  {marker} {title[:60] if title else '(no title)'}")
-        else:
-            # 重複の場合
-            print(f"  [DUP] {title[:60] if title else '(no title)'}")
-        
-        # 新しいリンクをキューに追加
-        # キーワードを含むリンクを優先して処理
-        keyword_links = []
-        other_links = []
-        for link in parser.links[:30]:
-            nl = normalize_url(link)
-            new_domain = urlparse(nl).netloc
-            if not shared_state.is_visited(nl) and is_valid_url(nl):
-                if new_domain == domain:
-                    if keyword and keyword.lower() in nl.lower():
-                        keyword_links.append(nl)
-                    else:
-                        other_links.append(nl)
-        
-        # キーワードリンクを先粗に処理
-        if keyword:
-            urls = keyword_links + other_links + urls
-        else:
-            urls = other_links + urls
+    def count(self):
+        with self.lock:
+            return len(self.results)
+
+
+# ── メインクローラー ──────────────────────────────────────
 
 def crawl(keyword=None):
     robots = RobotsTxtParser()
     shared_state = SharedState()
-    domain_queues = {}
-    
-    # 既存のCSVから訪問済みURLを読み込む
+
+    # 既存URLを重複チェック用に読み込む（visitedには入れない＝子リンク探索を妨げない）
     existing_urls = load_existing_urls(OUTPUT_FILE)
-    shared_state.visited.update(existing_urls)
-    
-    # 各ドメインのキューを初期化
+    with shared_state.lock:
+        # seen_content に登録しておくことで add_result での重複追加を防ぐ
+        for u in existing_urls:
+            shared_state.seen_content.add(f"{u}|")
+
+    # URL単位の統合キュー（url, depth）
+    url_queue = Queue()
+
     seed_list = SEED_URLS.copy()
     if keyword:
         seed_list.extend(generate_search_urls(keyword))
-    
+
+    # robots.txt 並列取得
+    domains = list({urlparse(normalize_url(s)).netloc for s in seed_list})
+    print(f"robots.txt を {len(domains)} ドメイン分取得中...")
+    with ThreadPoolExecutor(max_workers=min(32, len(domains))) as ex:
+        ex.map(robots.fetch, domains)
+
+    # シードをキューへ投入
     for seed in seed_list:
         seed = normalize_url(seed)
+        url_queue.put((seed, 0))
+        # サイトマップ・RSS からも追加（シードドメインのみ）
         domain = urlparse(seed).netloc
-        print(f"robots.txt 取得中: {domain}")
-        robots.fetch(domain)
-        
-        if domain not in domain_queues:
-            domain_queues[domain] = []
-        domain_queues[domain].append(seed)
-        
-        # サイトマップとRSSを取得
         for u in fetch_sitemap(domain) + fetch_rss(domain):
             if urlparse(u).netloc == domain:
-                domain_queues[domain].append(u)
-    
-    print(f"\nクロール開始  最大{MAX_PAGES}ページ / 深さ{MAX_DEPTH}")
+                url_queue.put((u, 1))
+
+    print(f"\nクロール開始  最大{MAX_PAGES}ページ / 深さ{MAX_DEPTH} / スレッド{MAX_WORKERS}")
     if keyword:
-        print(f"🔍 キーワード: '{keyword}' \n")
-    else:
-        print()
-    
-    # ThreadPoolExecutorで並列処理
-    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
-        futures = []
-        for domain, urls in domain_queues.items():
-            future = executor.submit(crawl_domain, domain, urls, shared_state, robots, keyword)
-            futures.append(future)
-        
-        # すべてのスレッドが完了するのを待つ
-        for future in as_completed(futures):
+        print(f"🔍 キーワード: '{keyword}'")
+    print()
+
+    start_time = time.time()
+
+    def worker():
+        while True:
+            # 上限チェック
+            if shared_state.count() >= MAX_PAGES:
+                return
+
             try:
-                future.result()
+                url, depth = url_queue.get(timeout=3)
+            except Empty:
+                # キューが空 → 終了
+                return
+
+            try:
+                url = normalize_url(url)
+
+                if shared_state.is_visited(url) or not is_valid_url(url):
+                    continue  # ← return だとスレッドが死ぬ
+                if not robots.can_fetch(url):
+                    continue  # ← 同上
+
+                shared_state.mark_visited(url)
+
+                if shared_state.count() >= MAX_PAGES:
+                    continue
+
+                current = shared_state.count() + 1
+                print(f"[{current}/{MAX_PAGES}] {url}")
+
+                html = fetch_page(url)
+                if not html:
+                    continue  # ← 同上
+
+                parser = ContentParser(url)
+                try:
+                    parser.feed(html)
+                except Exception as e:
+                    print(f"  [SKIP] パース失敗: {e}")
+                    continue  # ← 同上
+
+                title = parser.title.strip()
+
+                if shared_state.add_result({"url": url, "title": title[:200]}):
+                    marker = "[KEY]" if keyword and (
+                        keyword.lower() in title.lower() or keyword.lower() in url.lower()
+                    ) else "  ✓"
+                    elapsed = time.time() - start_time
+                    pps = shared_state.count() / elapsed if elapsed > 0 else 0
+                    print(f"  {marker} {title[:60] or '(no title)'}  [{pps:.1f} p/s]")
+                else:
+                    print(f"  [DUP] {title[:60] or '(no title)'}")
+
+                # 子リンクをキューへ追加
+                if depth < MAX_DEPTH:
+                    for link in parser.links[:30]:
+                        nl = normalize_url(link)
+                        if not shared_state.is_visited(nl) and is_valid_url(nl):
+                            new_domain = urlparse(nl).netloc
+                            robots.fetch(new_domain)
+                            url_queue.put((nl, depth + 1))
+
+            finally:
+                url_queue.task_done()
+
+    with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
+        futures = [executor.submit(worker) for _ in range(MAX_WORKERS)]
+        for f in as_completed(futures):
+            try:
+                f.result()
             except Exception as e:
                 print(f"スレッドエラー: {e}")
-    
+
+    elapsed = time.time() - start_time
+    count = shared_state.count()
+    print(f"\n⏱  {elapsed:.1f}秒  平均 {count/elapsed:.1f} pages/sec")
+
     return shared_state.results
 
 
 # ── エントリポイント ──────────────────────────────────────
 
 if __name__ == "__main__":
-    # コマンドライン引数でキーワードを取得
     keyword = sys.argv[1] if len(sys.argv) > 1 else None
-    
+
     pages = crawl(keyword=keyword)
 
-    # CSVフォーマットで出力（既存ファイルがあれば追加）
+    # CSV書き出し（既存ファイルがあれば追記）
     try:
-        existing_pages = []
         with open(OUTPUT_FILE, "r", encoding="utf-8") as f:
             reader = csv.DictReader(f)
-            existing_pages = list(reader) if reader else []
+            existing_pages = list(reader)
     except FileNotFoundError:
         existing_pages = []
-    
-    # 既存と新規を設合
+
     existing_urls = {p["url"] for p in existing_pages}
     new_pages = [p for p in pages if p["url"] not in existing_urls]
-    
     all_pages = existing_pages + new_pages
-    
+
     with open(OUTPUT_FILE, "w", encoding="utf-8", newline="") as f:
         writer = csv.DictWriter(f, fieldnames=["url", "title"])
         writer.writeheader()
         writer.writerows(all_pages)
 
-    print(f"\n✅ 完了！  追加: {len(new_pages)} / 合計: {len(all_pages)} ページ → {OUTPUT_FILE}")
+    print(f"✅ 完了！  追加: {len(new_pages)} / 合計: {len(all_pages)} ページ → {OUTPUT_FILE}")
