@@ -29,10 +29,16 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://www.youtube.com/",
+    "https://www.myinstants.com/ja/",
+    "https://www.deepl.com/ja/translator",
+    "https://www.deepl.com/en/translator",
+    "https://soundcloud.com/",
+    "https://x.gd/",
+    "https://d.kuku.lu/",
+
 ]
-MAX_PAGES       = 500
-MAX_DEPTH       = 4
+MAX_PAGES       = 2000
+MAX_DEPTH       = 6
 TIMEOUT         = 5       # 1リクエストのタイムアウト（秒）
 OUTPUT_FILE     = "index.csv"
 MAX_CONCURRENT  = 100     # 同時リクエスト数（増やすほど速い・増やしすぎるとBANリスク）
