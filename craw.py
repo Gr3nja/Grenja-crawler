@@ -29,10 +29,10 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://cookpad.com/jp",
+    "https://www.youtube.com/",
 ]
-MAX_PAGES       = 5000
-MAX_DEPTH       = 6
+MAX_PAGES       = 500
+MAX_DEPTH       = 4
 TIMEOUT         = 5       # 1リクエストのタイムアウト（秒）
 OUTPUT_FILE     = "index.csv"
 MAX_CONCURRENT  = 100     # 同時リクエスト数（増やすほど速い・増やしすぎるとBANリスク）
