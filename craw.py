@@ -29,12 +29,8 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://www.myinstants.com/ja/",
-    "https://www.deepl.com/ja/translator",
-    "https://www.deepl.com/en/translator",
-    "https://soundcloud.com/",
-    "https://x.gd/",
-    "https://d.kuku.lu/",
+    "https://github.com/Gr3nja",
+           # ネット用語辞典
 
 ]
 MAX_PAGES       = 2000
