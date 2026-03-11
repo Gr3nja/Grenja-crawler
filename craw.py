@@ -29,16 +29,17 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://github.com/Gr3nja",
+    "https://ja.wikipedia.org/wiki/",
+    "https://en.wikipedia.org/wiki/",
            # ネット用語辞典
 
 ]
-MAX_PAGES       = 2000
-MAX_DEPTH       = 6
+MAX_PAGES       = 200
+MAX_DEPTH       = 10
 TIMEOUT         = 5       # 1リクエストのタイムアウト（秒）
 OUTPUT_FILE     = "index.csv"
-MAX_CONCURRENT  = 100     # 同時リクエスト数（増やすほど速い・増やしすぎるとBANリスク）
-MAX_LINKS       = 30      # 1ページから追いかけるリンク数
+MAX_CONCURRENT  = 200     # 同時リクエスト数（増やすほど速い・増やしすぎるとBANリスク）
+MAX_LINKS       = 300      # 1ページから追いかけるリンク数30くらいが良い
 # =============================================
 
 
