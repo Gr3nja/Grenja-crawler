@@ -142,7 +142,7 @@ def generate_search_urls(keyword: str) -> list:
 
 class RobotsTxtParser:
     def __init__(self):
-        self._disallowed: dict = {}
+        self._disallowed: dict = {}s
         self._delay: dict = {}
         self._fetching: set = set()
         self._lock = asyncio.Lock()
