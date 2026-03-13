@@ -30,7 +30,11 @@ SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
     "https://ja.wikipedia.org/wiki/",
-    "https://en.wikipedia.org/wiki/",
+    "https://www.calculator.net/",
+"https://docs.google.com/document/",
+"https://classroom.google.com/",
+"https://docs.google.com/presentation/",
+
            # ネット用語辞典
 
 ]
