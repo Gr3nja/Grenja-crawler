@@ -29,11 +29,8 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://ja.wikipedia.org/wiki/",
-    "https://www.calculator.net/",
-"https://docs.google.com/document/",
-"https://classroom.google.com/",
-"https://docs.google.com/presentation/",
+    "https://chatgpt.com/",
+    "https://grok.com/",
 
            # ネット用語辞典
 
@@ -142,7 +139,7 @@ def generate_search_urls(keyword: str) -> list:
 
 class RobotsTxtParser:
     def __init__(self):
-        self._disallowed: dict = {}s
+        self._disallowed: dict = {}
         self._delay: dict = {}
         self._fetching: set = set()
         self._lock = asyncio.Lock()
