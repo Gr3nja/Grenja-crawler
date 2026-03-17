@@ -29,8 +29,9 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://chatgpt.com/",
-    "https://grok.com/",
+    "https://jp.pinterest.com/",
+    "https://www.tiktok.com/",
+    
 
            # ネット用語辞典
 
