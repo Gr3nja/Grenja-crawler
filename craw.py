@@ -29,15 +29,15 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://jp.pinterest.com/",
-    "https://www.tiktok.com/",
-    
+    "https://zenn.dev/",
+    "https://qiita.com/",
+
 
            # ネット用語辞典
 
 ]
-MAX_PAGES       = 200
-MAX_DEPTH       = 10
+MAX_PAGES       = 1000
+MAX_DEPTH       = 20
 TIMEOUT         = 5       # 1リクエストのタイムアウト（秒）
 OUTPUT_FILE     = "index.csv"
 MAX_CONCURRENT  = 200     # 同時リクエスト数（増やすほど速い・増やしすぎるとBANリスク）
