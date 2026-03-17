@@ -29,14 +29,13 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://zenn.dev/",
-    "https://qiita.com/",
+    "https://ja.wikipedia.org/wiki/",
 
 
            # ネット用語辞典
 
 ]
-MAX_PAGES       = 1000
+MAX_PAGES       = 500
 MAX_DEPTH       = 20
 TIMEOUT         = 5       # 1リクエストのタイムアウト（秒）
 OUTPUT_FILE     = "index.csv"
