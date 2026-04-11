@@ -29,7 +29,7 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://ja.wikipedia.org/wiki/",
+    "https://thehackernews.com/",
 
 
            # ネット用語辞典
