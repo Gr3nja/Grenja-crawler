@@ -29,20 +29,20 @@ if sys.platform == "win32":
 SEED_URLS = [
     # 日本語サイト
     # 日本語 - 百科事典・辞書
-    "https://news.ycombinator.com/",
-    "https://www.bleepingcomputer.com/",
+    "https://qiita.com/",
+    "https://dev.to/",
 
 
 
            # ネット用語辞典
 
 ]
-MAX_PAGES       = 500
-MAX_DEPTH       = 20
+MAX_PAGES       = 2000
+MAX_DEPTH       = 200
 TIMEOUT         = 5       # 1リクエストのタイムアウト（秒）
 OUTPUT_FILE     = "index.csv"
 MAX_CONCURRENT  = 200     # 同時リクエスト数（増やすほど速い・増やしすぎるとBANリスク）
-MAX_LINKS       = 100      # 1ページから追いかけるリンク数30くらいが良い
+MAX_LINKS       = 500      # 1ページから追いかけるリンク数30くらいが良い
 # =============================================
 
 
