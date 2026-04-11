@@ -27,22 +27,21 @@ if sys.platform == "win32":
 #                    設定
 # =============================================
 SEED_URLS = [
-    # 日本語サイト
-    # 日本語 - 百科事典・辞書
+    "https://zenn.dev/",
     "https://qiita.com/",
+    "https://ja.wikipedia.org/",
+    "https://note.com/",
+    "https://github.com/",
     "https://dev.to/",
-
-
-
-           # ネット用語辞典
-
+    "https://news.ycombinator.com/",
+    "https://www.techcrunch.com/",
 ]
-MAX_PAGES       = 2000
-MAX_DEPTH       = 200
-TIMEOUT         = 5       # 1リクエストのタイムアウト（秒）
+MAX_PAGES       = 500
+MAX_DEPTH       = 3
+TIMEOUT         = 5
 OUTPUT_FILE     = "index.csv"
-MAX_CONCURRENT  = 200     # 同時リクエスト数（増やすほど速い・増やしすぎるとBANリスク）
-MAX_LINKS       = 500      # 1ページから追いかけるリンク数30くらいが良い
+MAX_CONCURRENT  = 20
+MAX_LINKS       = 30
 # =============================================
 
 
@@ -123,18 +122,55 @@ def load_existing_urls(filename: str) -> set:
         print(f"[INFO] {filename}はまだ存在しません。新規作成します")
     return urls
 
-def generate_search_urls(keyword: str) -> list:
-    urls = [
-        f"https://www.google.com/search?q={quote(keyword)}",
-        f"https://www.bing.com/search?q={quote(keyword)}",
-        f"https://duckduckgo.com/?q={quote(keyword)}",
-        f"https://github.com/search?q={quote(keyword)}",
-        f"https://stackoverflow.com/search?q={quote(keyword)}",
-        f"https://zenn.dev/search?q={quote(keyword)}",
-        f"https://qiita.com/search?q={quote(keyword)}",
-    ]
-    print(f"[INFO] キーワード '{keyword}' に基づいた検索URLを追加")
+def generate_search_urls(keywords: str | list) -> list:
+    """キーワード（複数可）に基づいた検索URLを生成"""
+    if isinstance(keywords, str):
+        keywords = [keywords]
+    
+    urls = []
+    for keyword in keywords:
+        q = quote(keyword)
+        urls.extend([
+            f"https://www.google.com/search?q={q}",
+            f"https://www.bing.com/search?q={q}",
+            f"https://duckduckgo.com/?q={q}",
+            f"https://github.com/search?q={q}",
+            f"https://stackoverflow.com/search?q={q}",
+            f"https://zenn.dev/search?q={q}",
+            f"https://qiita.com/search?q={q}",
+        ])
+    print(f"[INFO] {len(keywords)}個のキーワードに基づいた検索URL({len(urls)}件)を追加")
     return urls
+
+
+def calc_keyword_score(url: str, title: str, keywords: list) -> float:
+    """キーワードに対する関連度スコア(0.0-1.0)を計算
+    
+    キーワード単語との完全一致のみ対象
+    例: "apple"は"pineapple"には一致しない（完全一致のみ）
+    """
+    if not keywords:
+        return 0.0
+    
+    score = 0.0
+    title_lower = title.lower()
+    url_lower = url.lower()
+    
+    for kw in keywords:
+        kw_lower = kw.lower()
+        
+        # タイトルで完全一致する単語があるか（スペース区切り）
+        title_words = title_lower.split()
+        if kw_lower in title_words:
+            score += 1.0
+            continue
+        
+        # URLで完全一致する単語があるか（スラッシュ・ハイフン・ドット区切り）
+        url_words = url_lower.replace('-', ' ').replace('/', ' ').replace('.', ' ').split()
+        if kw_lower in url_words:
+            score += 0.5
+    
+    return min(score / len(keywords), 1.0)
 
 
 # ── robots.txt（async版） ─────────────────────────────────
@@ -239,22 +275,34 @@ async def fetch_rss(session: aiohttp.ClientSession, domain: str) -> list:
 
 # ── メインクローラー ──────────────────────────────────────
 
-async def crawl_async(keyword: str | None = None) -> list:
+async def crawl_async(keywords: str | list | None = None) -> list:
+    """キーワード対応のクローラー
+    
+    Args:
+        keywords: 単一キーワード(str)、複数キーワード(list)、またはNone
+    """
     robots = RobotsTxtParser()
     visited: set = set()
-    seen_urls: set = set()   # 既存CSV + 今回追加済みURLの重複排除
+    seen_urls: set = set()
     results: list = []
     start_time = time.time()
+    
+    # キーワード正規化
+    if isinstance(keywords, str):
+        keywords = [keywords] if keywords else []
+    elif keywords is None:
+        keywords = []
+    
+    keywords = [kw.strip() for kw in keywords if kw.strip()]
 
-    # 既存URLはCSV書き出し時のマージでのみ使う（seen_urlsには入れない）
     existing_urls = load_existing_urls(OUTPUT_FILE)
 
     queue: asyncio.Queue = asyncio.Queue()
     semaphore = asyncio.Semaphore(MAX_CONCURRENT)
 
     seed_list = SEED_URLS.copy()
-    if keyword:
-        seed_list.extend(generate_search_urls(keyword))
+    if keywords:
+        seed_list.extend(generate_search_urls(keywords))
 
     ssl_ctx = ssl.create_default_context()
     ssl_ctx.check_hostname = False
@@ -268,12 +316,10 @@ async def crawl_async(keyword: str | None = None) -> list:
         timeout=aiohttp.ClientTimeout(total=TIMEOUT),
     ) as session:
 
-        # robots.txt を並列取得
         domains = list({urlparse(normalize_url(s)).netloc for s in seed_list})
         print(f"robots.txt を {len(domains)} ドメイン分取得中...")
         await asyncio.gather(*[robots.fetch(session, d) for d in domains])
 
-        # シード + サイトマップ + RSS をキューへ投入
         for seed in seed_list:
             await queue.put((normalize_url(seed), 0))
 
@@ -286,8 +332,8 @@ async def crawl_async(keyword: str | None = None) -> list:
                     await queue.put((u, 1))
 
         print(f"\nクロール開始  最大{MAX_PAGES}ページ / 深さ{MAX_DEPTH} / 同時{MAX_CONCURRENT}")
-        if keyword:
-            print(f"🔍 キーワード: '{keyword}'")
+        if keywords:
+            print(f"🔍 キーワード: {', '.join(keywords)}")
         print()
 
         # ── ワーカー ──────────────────────────────────────
@@ -349,13 +395,25 @@ async def crawl_async(keyword: str | None = None) -> list:
 
                     title = parser.title.strip()
                     seen_urls.add(url)
-                    results.append({"url": url, "title": title[:200]})
+                    
+                    # キーワードスコア計算
+                    kw_score = calc_keyword_score(url, title, keywords)
+                    results.append({
+                        "url": url,
+                        "title": title[:200],
+                        "_score": kw_score
+                    })
 
                     elapsed = time.time() - start_time
                     pps = len(results) / elapsed if elapsed > 0 else 0
-                    marker = "[KEY]" if keyword and (
-                        keyword.lower() in title.lower() or keyword.lower() in url.lower()
-                    ) else "  ✓"
+                    
+                    # 表示: キーワード関連度を可視化
+                    if keywords and kw_score > 0:
+                        bar = "█" * int(kw_score * 5)
+                        marker = f"[{bar:<5}]"
+                    else:
+                        marker = "  ✓  "
+                    
                     print(f"[{len(results)}/{MAX_PAGES}] {marker} {title[:60] or '(no title)'}  [{pps:.1f} p/s]")
 
                     if len(results) >= MAX_PAGES:
@@ -393,9 +451,23 @@ async def crawl_async(keyword: str | None = None) -> list:
 # ── エントリポイント ──────────────────────────────────────
 
 if __name__ == "__main__":
-    keyword = sys.argv[1] if len(sys.argv) > 1 else None
-
-    pages = asyncio.run(crawl_async(keyword=keyword))
+    # コマンドライン引数でキーワードを取得（複数対応: -k kw1 kw2 kw3）
+    keywords = None
+    if len(sys.argv) > 1:
+        if sys.argv[1] == "-k" and len(sys.argv) > 2:
+            keywords = sys.argv[2:]
+        else:
+            keywords = [sys.argv[1]]
+    
+    pages = asyncio.run(crawl_async(keywords=keywords))
+    
+    # キーワード指定時: スコアでソート
+    if keywords:
+        pages.sort(key=lambda p: p.get("_score", 0), reverse=True)
+    
+    # 常に _score フィールドを削除（CSV出力に不要）
+    for p in pages:
+        p.pop("_score", None)
 
     # CSV書き出し（既存ファイルがあれば追記）
     try:
@@ -414,3 +486,5 @@ if __name__ == "__main__":
         writer.writerows(all_pages)
 
     print(f"✅ 完了！  追加: {len(new_pages)} / 合計: {len(all_pages)} ページ → {OUTPUT_FILE}")
+    if keywords:
+        print(f"   キーワード: {', '.join(keywords)} (関連度スコア順にソート)")
